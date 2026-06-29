@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic Tac Toe</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#071c3c,#0a58df);
+}
+
+.container{
+    text-align:center;
+    background:rgba(255,255,255,0.1);
+    backdrop-filter:blur(10px);
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 8px 25px rgba(0,0,0,0.3);
+}
+
+h1{
+    color:white;
+    margin-bottom:20px;
+    font-size:2.5rem;
+}
+
+.status{
+    color:white;
+    font-size:1.2rem;
+    margin-bottom:20px;
+    font-weight:bold;
+}
+
+.board{
+    display:grid;
+    grid-template-columns:repeat(3,110px);
+    gap:10px;
+    justify-content:center;
+}
+
+.cell{
+    width:110px;
+    height:110px;
+    background:white;
+    border-radius:15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:3rem;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.cell:hover{
+    transform:scale(1.05);
+    background:#f1f5f9;
+}
+
+.x{
+    color:#2563eb;
+}
+
+.o{
+    color:#dc2626;
+}
+
+button{
+    margin-top:25px;
+    padding:12px 25px;
+    border:none;
+    border-radius:10px;
+    background:#22c55e;
+    color:white;
+    font-size:1rem;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    background:#16a34a;
+    transform:translateY(-2px);
+}
+
+.winner{
+    background:#facc15 !important;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🎮 Tic Tac Toe</h1>
+
+    <div class="status" id="status">
+        Player X's Turn
+    </div>
+
+    <div class="board" id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+
+    <button onclick="restartGame()">🔄 Restart Game</button>
+</div>
+
+<script>
+const cells = document.querySelectorAll(".cell");
+const statusText = document.getElementById("status");
+
+let currentPlayer = "X";
+let gameActive = true;
+let gameState = ["","","","","","","","",""];
+
+const winningConditions = [
+    [0,1,2],
+    [3,4,5],
+    [6,7,8],
+    [0,3,6],
+    [1,4,7],
+    [2,5,8],
+    [0,4,8],
+    [2,4,6]
+];
+
+cells.forEach(cell=>{
+    cell.addEventListener("click",handleClick);
+});
+
+function handleClick() {
+    const index = this.dataset.index;
+
+    if(gameState[index] !== "" || !gameActive) return;
+
+    gameState[index] = currentPlayer;
+    this.textContent = currentPlayer;
+    this.classList.add(currentPlayer.toLowerCase());
+
+    checkWinner();
+}
+
+function checkWinner() {
+
+    let won = false;
+
+    winningConditions.forEach(condition => {
+        const [a,b,c] = condition;
+
+        if(
+            gameState[a] &&
+            gameState[a] === gameState[b] &&
+            gameState[a] === gameState[c]
+        ){
+            won = true;
+
+            cells[a].classList.add("winner");
+            cells[b].classList.add("winner");
+            cells[c].classList.add("winner");
+        }
+    });
+
+    if(won){
+        statusText.textContent =
+            `🎉 Player ${currentPlayer} Wins!`;
+        gameActive = false;
+        return;
+    }
+
+    if(!gameState.includes("")){
+        statusText.textContent = "🤝 It's a Draw!";
+        gameActive = false;
+        return;
+    }
+
+    currentPlayer = currentPlayer === "X" ? "O" : "X";
+
+    statusText.textContent =
+        `Player ${currentPlayer}'s Turn`;
+}
+
+function restartGame(){
+
+    gameState = ["","","","","","","","",""];
+    currentPlayer = "X";
+    gameActive = true;
+
+    statusText.textContent =
+        "Player X's Turn";
+
+    cells.forEach(cell=>{
+        cell.textContent = "";
+        cell.classList.remove("x","o","winner");
+    });
+}
+</script>
+
+</body>
+</html>

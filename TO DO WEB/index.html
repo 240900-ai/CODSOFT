@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskMaster Pro</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,sans-serif}
+
+body{
+background:linear-gradient(135deg,#0f172a,#1e293b);
+min-height:100vh;
+padding:20px;
+display:flex;
+justify-content:center;
+}
+
+.container{
+width:100%;
+max-width:900px;
+background:#fff;
+padding:25px;
+border-radius:20px;
+box-shadow:0 15px 35px rgba(0,0,0,.3);
+}
+
+h1{
+text-align:center;
+margin-bottom:20px;
+color:#0f172a;
+}
+
+.input-group{
+display:grid;
+grid-template-columns:2fr 1fr auto;
+gap:10px;
+margin-bottom:20px;
+}
+
+input{
+padding:12px;
+border:2px solid #ddd;
+border-radius:10px;
+}
+
+button{
+border:none;
+padding:12px;
+border-radius:10px;
+cursor:pointer;
+}
+
+.add-btn{
+background:#2563eb;
+color:white;
+}
+
+.toolbar{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+margin-bottom:15px;
+}
+
+.search{
+flex:1;
+}
+
+.filter{
+background:#e2e8f0;
+}
+
+.active{
+background:#2563eb;
+color:white;
+}
+
+.stats{
+font-weight:600;
+margin-bottom:10px;
+}
+
+.progress{
+height:12px;
+background:#ddd;
+border-radius:20px;
+overflow:hidden;
+margin-bottom:20px;
+}
+
+.progress-bar{
+height:100%;
+width:0%;
+background:linear-gradient(90deg,#22c55e,#16a34a);
+transition:.4s;
+}
+
+.task{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px;
+margin-bottom:10px;
+background:#f8fafc;
+border-left:5px solid #2563eb;
+border-radius:10px;
+}
+
+.completed{
+opacity:.7;
+border-left-color:#22c55e;
+}
+
+.completed .task-text{
+text-decoration:line-through;
+}
+
+.date{
+font-size:13px;
+color:#64748b;
+margin-top:4px;
+}
+
+.actions{
+display:flex;
+gap:6px;
+}
+
+.done{background:#22c55e;color:white}
+.edit{background:#f59e0b;color:white}
+.delete{background:#ef4444;color:white}
+
+.modal{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.5);
+justify-content:center;
+align-items:center;
+}
+
+.modal-content{
+background:white;
+padding:20px;
+border-radius:15px;
+width:350px;
+}
+
+.modal-content input{
+width:100%;
+margin:8px 0;
+}
+
+.save{
+background:#2563eb;
+color:white;
+width:100%;
+}
+
+@media(max-width:700px){
+
+.input-group{
+grid-template-columns:1fr;
+}
+
+.task{
+flex-direction:column;
+align-items:flex-start;
+gap:10px;
+}
+
+.actions{
+width:100%;
+}
+
+.actions button{
+flex:1;
+}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>📋 TaskMaster Pro</h1>
+
+<div class="input-group">
+<input id="taskInput" placeholder="Enter task">
+<input type="datetime-local" id="taskDate">
+<button class="add-btn" onclick="addTask()">Add Task</button>
+</div>
+
+<div class="toolbar">
+<input id="search" class="search" placeholder="🔍 Search Tasks" onkeyup="renderTasks()">
+
+<button class="filter active" onclick="setFilter('all',this)">All</button>
+<button class="filter" onclick="setFilter('pending',this)">Pending</button>
+<button class="filter" onclick="setFilter('completed',this)">Completed</button>
+</div>
+
+<div class="stats" id="stats"></div>
+
+<div class="progress">
+<div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div id="taskList"></div>
+
+</div>
+
+<div class="modal" id="editModal">
+<div class="modal-content">
+
+<h2>Edit Task</h2>
+
+<input id="editInput">
+
+<input type="datetime-local" id="editDate">
+
+<button class="save" onclick="saveEdit()">
+Save Changes
+</button>
+
+</div>
+</div>
+
+<script>
+
+let tasks=JSON.parse(localStorage.getItem("tasks"))||[];
+let filter="all";
+let editId=null;
+
+function saveStorage(){
+localStorage.setItem("tasks",JSON.stringify(tasks));
+}
+
+function addTask(){
+
+const text=document.getElementById("taskInput").value.trim();
+const date=document.getElementById("taskDate").value;
+
+if(!text)return alert("Enter a task");
+
+tasks.push({
+id:Date.now(),
+text,
+date,
+completed:false
+});
+
+document.getElementById("taskInput").value="";
+document.getElementById("taskDate").value="";
+
+saveStorage();
+renderTasks();
+}
+
+function deleteTask(id){
+tasks=tasks.filter(t=>t.id!==id);
+saveStorage();
+renderTasks();
+}
+
+function toggleTask(id){
+
+tasks=tasks.map(t=>{
+if(t.id===id)t.completed=!t.completed;
+return t;
+});
+
+saveStorage();
+renderTasks();
+}
+
+function editTask(id){
+
+editId=id;
+
+const task=tasks.find(t=>t.id===id);
+
+document.getElementById("editInput").value=task.text;
+document.getElementById("editDate").value=task.date||"";
+
+document.getElementById("editModal").style.display="flex";
+}
+
+function saveEdit(){
+
+const task=tasks.find(t=>t.id===editId);
+
+task.text=document.getElementById("editInput").value;
+task.date=document.getElementById("editDate").value;
+
+saveStorage();
+renderTasks();
+
+document.getElementById("editModal").style.display="none";
+}
+
+window.onclick=e=>{
+if(e.target.id==="editModal")
+document.getElementById("editModal").style.display="none";
+}
+
+function setFilter(f,btn){
+
+filter=f;
+
+document
+.querySelectorAll(".filter")
+.forEach(b=>b.classList.remove("active"));
+
+btn.classList.add("active");
+
+renderTasks();
+}
+
+function renderTasks(){
+
+const search=
+document.getElementById("search")
+.value.toLowerCase();
+
+const filtered=
+tasks.filter(t=>{
+
+const s=t.text.toLowerCase().includes(search);
+
+const f=
+filter==="all" ||
+(filter==="completed" && t.completed) ||
+(filter==="pending" && !t.completed);
+
+return s&&f;
+});
+
+const completed=
+tasks.filter(t=>t.completed).length;
+
+const progress=
+tasks.length
+? completed/tasks.length*100
+:0;
+
+document.getElementById("progressBar")
+.style.width=progress+"%";
+
+document.getElementById("stats")
+.innerHTML=
+`Total: ${tasks.length} |
+Completed: ${completed} |
+Pending: ${tasks.length-completed} |
+Progress: ${Math.round(progress)}%`;
+
+const list=document.getElementById("taskList");
+
+if(filtered.length===0){
+list.innerHTML="<p>No Tasks Found</p>";
+return;
+}
+
+list.innerHTML=filtered.map(t=>`
+
+<div class="task ${t.completed?'completed':''}">
+
+<div>
+
+<div class="task-text">${t.text}</div>
+
+<div class="date">
+${t.date
+? '📅 '+new Date(t.date).toLocaleString()
+: 'No Due Date'}
+</div>
+
+</div>
+
+<div class="actions">
+
+<button class="done"
+onclick="toggleTask(${t.id})">
+${t.completed?'Undo':'Done'}
+</button>
+
+<button class="edit"
+onclick="editTask(${t.id})">
+Edit
+</button>
+
+<button class="delete"
+onclick="deleteTask(${t.id})">
+Delete
+</button>
+
+</div>
+
+</div>
+
+`).join("");
+}
+
+renderTasks();
+
+</script>
+
+</body>
+</html>

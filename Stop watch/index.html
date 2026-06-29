@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Stopwatch</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#0f172a,#1e293b,#334155);
+}
+
+.container{
+    width:90%;
+    max-width:700px;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(15px);
+    border-radius:20px;
+    padding:30px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,0.3);
+}
+
+h1{
+    color:white;
+    margin-bottom:20px;
+}
+
+.display{
+    font-size:3rem;
+    color:#00e5ff;
+    font-weight:bold;
+    margin:25px 0;
+}
+
+.status{
+    color:#ddd;
+    margin-bottom:20px;
+}
+
+.buttons{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:10px;
+}
+
+button{
+    padding:12px 20px;
+    border:none;
+    border-radius:50px;
+    cursor:pointer;
+    font-size:15px;
+    font-weight:bold;
+    transition:0.3s;
+}
+
+button:hover{
+    transform:translateY(-3px);
+}
+
+.start{background:#22c55e;color:white;}
+.pause{background:#f59e0b;color:white;}
+.resume{background:#3b82f6;color:white;}
+.lap{background:#8b5cf6;color:white;}
+.reset{background:#ef4444;color:white;}
+
+.laps{
+    margin-top:25px;
+    max-height:300px;
+    overflow-y:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    color:white;
+}
+
+th{
+    background:rgba(255,255,255,0.15);
+    padding:12px;
+}
+
+td{
+    padding:10px;
+    border-bottom:1px solid rgba(255,255,255,0.1);
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>⏱ Stopwatch</h1>
+
+    <div class="display" id="display">
+        00:00:00.000
+    </div>
+
+    <div class="status" id="status">
+        Ready
+    </div>
+
+    <div class="buttons">
+        <button class="start" onclick="startStopwatch()">Start</button>
+        <button class="pause" onclick="pauseStopwatch()">Pause</button>
+        <button class="resume" onclick="resumeStopwatch()">Resume</button>
+        <button class="lap" onclick="recordLap()">Lap</button>
+        <button class="reset" onclick="resetStopwatch()">Reset</button>
+    </div>
+
+    <div class="laps">
+        <h2 style="color:white;margin:20px 0;">Lap Records</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Lap No.</th>
+                    <th>Lap Time</th>
+                    <th>Total Time</th>
+                </tr>
+            </thead>
+
+            <tbody id="lapTable"></tbody>
+
+        </table>
+    </div>
+
+</div>
+
+<script>
+
+let startTime;
+let elapsedTime = 0;
+let timerInterval;
+let running = false;
+
+let lapCount = 1;
+let lastLapElapsed = 0;
+
+function formatTime(ms){
+
+    let milliseconds = ms % 1000;
+    let seconds = Math.floor(ms/1000)%60;
+    let minutes = Math.floor(ms/(1000*60))%60;
+    let hours = Math.floor(ms/(1000*60*60));
+
+    return (
+        String(hours).padStart(2,'0') + ":" +
+        String(minutes).padStart(2,'0') + ":" +
+        String(seconds).padStart(2,'0') + "." +
+        String(milliseconds).padStart(3,'0')
+    );
+}
+
+function updateDisplay(){
+    document.getElementById("display").textContent =
+        formatTime(elapsedTime);
+}
+
+function startStopwatch(){
+
+    if(running || elapsedTime>0) return;
+
+    startTime = Date.now();
+
+    timerInterval = setInterval(() => {
+
+        elapsedTime = Date.now() - startTime;
+        updateDisplay();
+
+    },10);
+
+    running = true;
+    document.getElementById("status").textContent = "Running";
+}
+
+function pauseStopwatch(){
+
+    if(!running) return;
+
+    clearInterval(timerInterval);
+    running = false;
+
+    document.getElementById("status").textContent = "Paused";
+}
+
+function resumeStopwatch(){
+
+    if(running || elapsedTime===0) return;
+
+    startTime = Date.now() - elapsedTime;
+
+    timerInterval = setInterval(() => {
+
+        elapsedTime = Date.now() - startTime;
+        updateDisplay();
+
+    },10);
+
+    running = true;
+    document.getElementById("status").textContent = "Running";
+}
+
+function resetStopwatch(){
+
+    clearInterval(timerInterval);
+
+    running = false;
+    elapsedTime = 0;
+    lapCount = 1;
+    lastLapElapsed = 0;
+
+    updateDisplay();
+
+    document.getElementById("lapTable").innerHTML = "";
+    document.getElementById("status").textContent = "Ready";
+}
+
+function recordLap(){
+
+    if(!running) return;
+
+    let lapTime = elapsedTime - lastLapElapsed;
+    lastLapElapsed = elapsedTime;
+
+    let row = document.createElement("tr");
+
+    row.innerHTML = `
+        <td>${lapCount}</td>
+        <td>${formatTime(lapTime)}</td>
+        <td>${formatTime(elapsedTime)}</td>
+    `;
+
+    document.getElementById("lapTable").prepend(row);
+
+    lapCount++;
+}
+
+updateDisplay();
+
+</script>
+
+</body>
+</html>
